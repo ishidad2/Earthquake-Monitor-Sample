@@ -1,0 +1,84 @@
+# Timezone configuration for M5Stack Earthquake Monitor
+# タイムゾーン設定ファイル
+#
+# このファイルをSDカードのルートディレクトリに「config.ini」という名前でコピーしてください。
+# Copy this file to SD card root directory as "config.ini"
+
+# タイムゾーン設定
+# Timezone configuration (case-insensitive)
+timezone=Asia/Tokyo
+
+# サポートされているタイムゾーン一覧
+# Supported timezones:
+#
+# アジア (Asia):
+#   Asia/Tokyo       (UTC+9)  - 日本標準時
+#   Asia/Shanghai    (UTC+8)  - 中国標準時
+#   Asia/Singapore   (UTC+8)  - シンガポール標準時
+#   Asia/Hong_Kong   (UTC+8)  - 香港標準時
+#   Asia/Seoul       (UTC+9)  - 韓国標準時
+#   Asia/Bangkok     (UTC+7)  - タイ標準時
+#   Asia/Dubai       (UTC+4)  - UAEガルフ標準時
+#   Asia/Kolkata     (UTC+5.5)- インド標準時
+#
+# アメリカ (Americas):
+#   America/New_York     (UTC-5) - 米国東部標準時
+#   America/Chicago      (UTC-6) - 米国中部標準時
+#   America/Denver       (UTC-7) - 米国山岳部標準時
+#   America/Los_Angeles  (UTC-8) - 米国太平洋標準時
+#   America/Sao_Paulo    (UTC-3) - ブラジル標準時
+#
+# ヨーロッパ (Europe):
+#   Europe/London    (UTC+0)  - グリニッジ標準時
+#   Europe/Paris     (UTC+1)  - 中央ヨーロッパ標準時
+#   Europe/Berlin    (UTC+1)  - 中央ヨーロッパ標準時
+#   Europe/Moscow    (UTC+3)  - モスクワ標準時
+#
+# オセアニア (Oceania):
+#   Pacific/Auckland (UTC+12) - ニュージーランド標準時
+#   Australia/Sydney (UTC+10) - オーストラリア東部標準時
+#
+# その他 (Others):
+#   UTC              (UTC+0)  - 協定世界時
+#   GMT              (UTC+0)  - グリニッジ標準時
+#
+# 注意事項:
+# - 大文字小文字は区別されません (asia/tokyo でも ASIA/TOKYO でも可)
+# - 夏時間（サマータイム）には対応していません（標準時のみ）
+# - サポートされていないタイムゾーンを指定すると、デフォルトのAsia/Tokyoが使用されます
+
+# Symbol blockchain configuration for M5Stack Earthquake Monitor
+# Symbol設定ファイル（地震モニターシステム用）
+#
+# このセクションはSymbolブロックチェーン連携機能の設定です（オプション）
+# Symbol blockchain integration settings (optional)
+
+# ネットワーク種別 (Network type)
+# testnet: テストネット (test network)
+# mainnet: メインネット (main network)
+network=testnet
+
+# ノードURL (Node URL)
+# 必ずhttps://で始まること (must start with https://)
+# 最大200文字 (max 200 characters)
+node=https://sym-test-03.opening-line.jp:3001
+
+# Symbolアドレス (Symbol address)
+# 39文字、testnetは'T'で始まり、mainnetは'N'で始まる
+# 39 characters, testnet starts with 'T', mainnet starts with 'N'
+# 例 (Example): TBIL6D6RURP45YQRWV6Q7YNBQGGDY4ZTYS4K7NI
+address=
+
+# 公開鍵 (Public key)
+# 64文字の16進数 (64 hex characters)
+# 例 (Example): 1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF
+pubKey=
+
+# 注意事項 (Notes):
+# - address と pubKey は空のままでもシステムは動作します
+#   (System works even if address and pubKey are empty)
+# - 秘密鍵(private key)は絶対にこのファイルに記載しないでください
+#   (NEVER write your private key in this file)
+# - networkとaddressの先頭文字が一致していることを確認してください
+#   testnet → T, mainnet → N
+#   (Ensure network and address prefix match: testnet → T, mainnet → N)
