@@ -58,6 +58,14 @@ static const unsigned long MEMORY_CHECK_INTERVAL = 10000;     // 10秒
 static const unsigned long LOW_MEMORY_THRESHOLD = 20000;      // 20KB
 static const unsigned long CRITICAL_MEMORY_THRESHOLD = 15000; // 15KB
 
+// Ping/Pong監視用タイマー
+static unsigned long lastPingSentTime = 0;      // 最後にPingを送信した時刻（0は未送信）
+static unsigned long lastPongReceivedTime = 0;  // 最後にPongを受信した時刻
+
+// Ping/Pong監視用定数
+static const unsigned long PING_INTERVAL = 60000;   // Ping送信間隔（60秒）
+static const unsigned long PONG_TIMEOUT = 30000;    // Pong応答タイムアウト（30秒）
+
 // 前方宣言
 static bool connectWebSocket();
 static void disconnectWebSocket();
@@ -69,6 +77,8 @@ static void monitorMemory();
 static void onWebSocketConnect();
 static void onWebSocketDisconnect();
 static void onWebSocketError(String error);
+static void sendPing();
+static bool checkPongTimeout();
 
 /**
  * @brief トランザクションハッシュの重複チェック
@@ -91,6 +101,58 @@ static bool isDuplicateTransaction(const String &txHash) {
 static void addTransactionHash(const String &txHash) {
     txHashBuffer[txHashIndex] = txHash;
     txHashIndex = (txHashIndex + 1) % TX_HASH_BUFFER_SIZE;  // 循環バッファ
+}
+
+/**
+ * @brief Ping送信処理
+ * @details WebSocket接続中にPingフレームを送信し、送信時刻を記録
+ */
+static void sendPing() {
+    if (wsConnected) {
+        bool success = webSocketClient.ping();
+        if (success) {
+            lastPingSentTime = millis();
+            consoleLog("[WebSocket] Ping送信");
+        } else {
+            consoleLog("[WebSocket] Ping送信失敗");
+            // Ping送信失敗時はlastPingSentTimeを更新しない（次回再試行）
+        }
+    }
+}
+
+/**
+ * @brief Pong応答タイムアウトチェック
+ * @return タイムアウト検出時true、正常時false
+ * @details Ping送信後30秒以内にPong応答がない場合、接続断と判断
+ * @note millis()オーバーフロー対策: unsigned long型の減算により、
+ *       オーバーフロー時も正しく動作（49.7日ごとのオーバーフロー）
+ */
+static bool checkPongTimeout() {
+    // Ping未送信時はチェックしない
+    if (lastPingSentTime == 0) {
+        return false;
+    }
+
+    // Pong受信済みの場合はタイムアウトしない
+    if (lastPongReceivedTime >= lastPingSentTime) {
+        return false;
+    }
+
+    unsigned long currentTime = millis();
+    unsigned long elapsedSincePing = currentTime - lastPingSentTime;
+
+    // Pongタイムアウトチェック（30秒超過）
+    if (elapsedSincePing > PONG_TIMEOUT) {
+        consoleLog("[WebSocket] Pong応答タイムアウト、接続断と判断");
+        disconnectWebSocket();
+
+        // 再接続タイマー開始（consecutiveFailuresは増加させない）
+        reconnectTimer = currentTime;
+
+        return true;
+    }
+
+    return false;
 }
 
 /**
@@ -230,6 +292,10 @@ static void onWebSocketConnect() {
     uidReceived = false;      // UID受信フラグリセット
     serverUid = "";           // UIDクリア
 
+    // Ping/Pong監視の初期化
+    lastPingSentTime = 0;            // Ping未送信状態
+    lastPongReceivedTime = millis(); // 接続確立時刻を記録
+
     // サブスクリプションはUID受信後に送信（handleWebSocketMessageで処理）
 }
 
@@ -340,7 +406,8 @@ void initWebSocket(const SymbolConfig &config) {
         } else if (event == WebsocketsEvent::GotPing) {
             consoleLog("[WebSocket] Ping受信");
         } else if (event == WebsocketsEvent::GotPong) {
-            consoleLog("[WebSocket] Pong受信");
+            consoleLog("[WebSocket] Pong受信、接続正常");
+            lastPongReceivedTime = millis();
         }
     });
 
@@ -385,6 +452,15 @@ void webSocketLoop() {
     } else {
         // WebSocket接続中の場合、メッセージをポーリング（常に呼び出す）
         webSocketClient.poll();
+
+        // Ping/Pong監視
+        // Ping送信タイミングチェック（60秒経過）
+        if (millis() - lastPingSentTime >= PING_INTERVAL) {
+            sendPing();
+        }
+
+        // Pongタイムアウトチェック
+        checkPongTimeout();
     }
 
     // メモリ監視（毎回実行）
