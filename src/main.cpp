@@ -240,6 +240,9 @@ void updateMainHeader() {
         // WebSocketインジケーターを再描画（時刻更新で消えるのを防ぐ）
         drawWebSocketIndicator(getWebSocketConnected());
 
+        // 時刻が変更されたタイミングで地震情報リストの相対時刻表示も更新
+        renderList();
+
         strcpy(lastTimeStr, currentTimeStr);
     }
 }
